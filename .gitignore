@@ -1,2 +1,14 @@
-# JetBrains IDE
 .idea
+.DS_Store
+.token
+.vscode/
+*.pyc
+__pycache__/
+
+intermediate_result/
+result/
+
+yarrp/
+input/
+
+logging.log

@@ -1,0 +1,12 @@
+{
+  "general": {
+    "filename": "test.yrp"
+  },
+  "yarrp": {
+    "target_file": "input/optimized_ip",
+    "output_file": "intermediate_result/test.yrp",
+    "probe_rate": 80000,
+    "probe_type": "ICMP",
+    "max_ttl": 16
+  }
+}
