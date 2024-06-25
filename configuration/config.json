@@ -45,14 +45,15 @@
     }
   },
   "ubuntu": {
-    "base_dir": "",
-    "yarrp_dir": "",
+    "base_dir": "/home/mogu/Project/ioda-upstream-delay-new",
+    "yarrp_dir": "/home/mogu/Project/ioda-upstream-delay-new/yarrp",
     "general": {
       "filename": "test.yrp"
     },
     "yarrp": {
-      "target_file": "",
-      "output_file": "",
+      "target_file": "/home/mogu/Project/ioda-upstream-delay-new/input/test_ip",
+      "intermediate_output_file": "/home/mogu/Project/ioda-upstream-delay-new/test.yrp",
+      "result_folder": "/home/mogu/Project/ioda-upstream-delay-new/result",
       "probe_rate": 80000,
       "probe_type": "ICMP",
       "max_ttl": 16

@@ -45,7 +45,7 @@ def setup():
         elif platform.system() == 'Linux':
             env = 'ubuntu'
     else:
-        env = 'default'
+        env = 'docker'
     
     with open('configuration/config.json', 'r') as f:
         configs = json.load(f)

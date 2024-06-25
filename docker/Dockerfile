@@ -3,19 +3,19 @@ FROM ubuntu:jammy
 ENV DEBIAN_FRONTEND=noninteractive
 ENV APP_ENV=docker
 
+ARG GITHUB_TOKEN
+
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    build-essential \
-    libpcap-dev \
     git \
+    build-essential \
     autoconf \
     automake \
     libtool \
     zlib1g-dev \
-    wget \
-    tcpdump \
+    libpcap-dev \
     curl \
+    wget \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Yarrp
@@ -26,10 +26,12 @@ RUN ./bootstrap && ./configure && make
 WORKDIR /
 
 # IODA-UPSTREAM-DELAY
-RUN git clone https://github.com/InetIntel/ioda-upstream-delay-new.git /ioda-upstream-delay
-RUN mkdir -p /project/intermediate_result /project/result
-# RUN python3 -m pip install asyncio
+RUN echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc && \
+    git clone https://github.com/InetIntel/ioda-upstream-delay-new.git /ioda-upstream-delay-new && \
+    rm /root/.netrc
+
+RUN mkdir -p /ioda-upstream-delay-new/intermediate_result /ioda-upstream-delay-new/result
 
 
-WORKDIR /project
+WORKDIR /ioda-upstream-delay-new
 CMD ["python3", "main.py"]
