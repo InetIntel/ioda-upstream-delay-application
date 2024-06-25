@@ -1,0 +1,61 @@
+{
+  "default": {
+    "base_dir": "",
+    "yarrp_dir": "",
+    "general": {
+      "filename": "test.yrp"
+    },
+    "yarrp": {
+      "target_file": "",
+      "output_file": "",
+      "result_folder": "",
+      "probe_rate": 80000,
+      "probe_type": "ICMP",
+      "max_ttl": 16
+    }
+  },
+  "docker": {
+    "ioda_dir": "/ioda-upstream-delay-new",
+    "yarrp_dir": "/yarrp",
+    "general": {
+      "filename": "test.yrp"
+    },
+    "yarrp": {
+      "target_file": "/ioda-upstream-delay-new/input/test_ip",
+      "intermediate_output_file": "/ioda-upstream-delay-new/intermediate_result/test.yrp",
+      "result_folder": "/ioda-upstream-delay-new/result",
+      "probe_rate": 80000,
+      "probe_type": "ICMP",
+      "max_ttl": 16
+    }
+  },
+  "macos": {
+    "base_dir": "/Users/weili/project/ioda-upstream-delay-new",
+    "yarrp_dir": "/Users/weili/project/ioda-upstream-delay-new/yarrp",
+    "general": {
+      "filename": "test.yrp"
+    },
+    "yarrp": {
+      "target_file": "/Users/weili/project/ioda-upstream-delay-new/input/test_ip",
+      "intermediate_output_file": "/Users/weili/project/ioda-upstream-delay-new/intermediate_result/test.yrp",
+      "result_folder": "/Users/weili/project/ioda-upstream-delay-new/result",
+      "probe_rate": 80000,
+      "probe_type": "ICMP",
+      "max_ttl": 16
+    }
+  },
+  "ubuntu": {
+    "base_dir": "",
+    "yarrp_dir": "",
+    "general": {
+      "filename": "test.yrp"
+    },
+    "yarrp": {
+      "target_file": "",
+      "output_file": "",
+      "probe_rate": 80000,
+      "probe_type": "ICMP",
+      "max_ttl": 16
+    }
+  }
+}

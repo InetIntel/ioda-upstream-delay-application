@@ -6,6 +6,7 @@ import asyncio
 import datetime
 import time
 import os
+import platform
 
 from probe.internet_scanner import run_yarrp
 from data_posting.post import post_data
@@ -34,25 +35,45 @@ def setup():
             logging.info(f"directory existed - {directory}")
 
     logging.info("basic setup complete")
+
+    # setup configuration - APP_ENV needs to be set prior the running
+    if os.getenv('APP_ENV') not in ['docker', 'macos', 'ubuntu']:
+        if os.path.exists('/.dockerenv'):
+            env = 'docker'
+        elif platform.system() == 'Darwin':
+            env = 'macos'
+        elif platform.system() == 'Linux':
+            env = 'ubuntu'
+    else:
+        env = 'default'
+    
+    with open('configuration/config.json', 'r') as f:
+        configs = json.load(f)
+
+    env_config = configs.get(env, configs['default'])
+    logging.info(f"conf loaded - {env}")
+
+    return env_config
+
     
 
 async def run_at_next_whole_hour(conf):
     await run_yarrp(conf)
-    await post_data()
+    await post_data(conf)
     
     while True:
         curr = datetime.datetime.now()
         next_whole_hour = curr.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
         delta = (next_whole_hour - curr).total_seconds()
-        logging.debug(f"delta is {delta}")
+        logging.info(f"delta is {delta}")
         await asyncio.sleep(delta)
 
         await run_yarrp(conf)
-        await post_data()
+        await post_data(conf)
 
 async def main():
-    conf = "configuration/test_config.json"
-    await run_at_next_whole_hour(conf)
+    env_config = setup()
+    await run_at_next_whole_hour(env_config)
 
 
 if __name__ == "__main__":

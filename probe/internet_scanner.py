@@ -1,22 +1,16 @@
 import json
 import asyncio
-import argparse
 import logging
 
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        return json.load(file) 
-
-async def run_yarrp(config_file):
-    config = load_config(config_file)
+async def run_yarrp(conf):
     yarrp_command = [
-        'yarrp/yarrp',
-        '-o', config['yarrp']['output_file'],
-        '-i', config['yarrp']['target_file'],
-        '-r', str(config['yarrp']['probe_rate']),
-        '-t', config['yarrp']['probe_type'],
+        f'{conf["yarrp_dir"]}/yarrp',
+        '-o', conf['yarrp']['intermediate_output_file'],
+        '-i', conf['yarrp']['target_file'],
+        '-r', str(conf['yarrp']['probe_rate']),
+        '-t', conf['yarrp']['probe_type'],
         '-v',
-        '-m', str(config['yarrp']['max_ttl']),
+        '-m', str(conf['yarrp']['max_ttl']),
     ]
 
     command = ' '.join(yarrp_command)
