@@ -24,9 +24,9 @@
       "target_file": "/ioda-upstream-delay-new/input/test_ip",
       "intermediate_output_file": "/ioda-upstream-delay-new/intermediate_result/test.yrp",
       "result_folder": "/ioda-upstream-delay-new/result",
-      "probe_rate": 80000,
+      "probe_rate": 60000,
       "probe_type": "ICMP",
-      "max_ttl": 16
+      "max_ttl": 32
     }
   },
   "macos": {

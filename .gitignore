@@ -9,6 +9,6 @@ intermediate_result/
 result/
 
 yarrp/
-input
+input/
 
-logging.log
+logging*
