@@ -13,8 +13,8 @@ import uvicorn
 
 from probe.internet_scanner import run_yarrp
 from data_posting.post import post_data
-from target_generation.census_analysis import address_analysis
-from target_generation.generate_target import address_generation
+#from target_generation.census_analysis import address_analysis
+#from target_generation.generate_target import address_generation
 from webhook.hook import app as test
 
 def setup():
