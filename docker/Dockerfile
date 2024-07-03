@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+#TODO app nees some other python libs
 
 # Yarrp
 RUN git clone https://github.com/cmand/yarrp.git /yarrp
@@ -32,6 +35,9 @@ RUN echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc && \
 
 RUN mkdir -p /ioda-upstream-delay-new/intermediate_result /ioda-upstream-delay-new/result
 
+# Python libs
+WORKDIR /ioda-upstream-delay-new
+RUN python3 -m pip install -r requirements.txt
 
 WORKDIR /ioda-upstream-delay-new
 CMD ["python3", "main.py"]

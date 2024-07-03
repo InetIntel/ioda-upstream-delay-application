@@ -8,11 +8,14 @@ import datetime
 import time
 import os
 import platform
+import uvicorn
+
 
 from probe.internet_scanner import run_yarrp
 from data_posting.post import post_data
 from target_generation.census_analysis import address_analysis
 from target_generation.generate_target import address_generation
+from webhook.hook import app as test
 
 def setup():
     # setup logging
@@ -75,12 +78,22 @@ async def run_at_next_whole_hour(conf):
         await post_data(conf)
 
 
+async def run_hook_server():
+    # TODO: adjust endpoint
+    config = uvicorn.Config(app=test, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    await server.serve()
+
 
 async def main():
     env_config = setup()
-    await run_at_next_whole_hour(env_config)
-    #address_analysis()
-    #address_generation()
+    uvicorn_task = asyncio.create_task(run_hook_server())
+    probing_task = asyncio.create_task(run_at_next_whole_hour(env_config))
+    await asyncio.wait(uvicorn_task, probing_task)
+    
+    # On server
+    # address_analysis()
+    # address_generation()
     
 
 if __name__ == "__main__":
