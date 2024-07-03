@@ -91,7 +91,7 @@ async def main():
     env_config = setup()
     uvicorn_task = asyncio.create_task(run_hook_server())
     probing_task = asyncio.create_task(run_at_next_whole_hour(env_config))
-    await asyncio.wait(uvicorn_task, probing_task)
+    await asyncio.gather(uvicorn_task, probing_task)
     
     # On server
     # address_analysis()
