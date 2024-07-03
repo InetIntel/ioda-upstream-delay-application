@@ -64,6 +64,8 @@ def setup():
     
 
 async def run_at_next_whole_hour(conf):
+    logging.info(f"run_at_next_whole_hour entered")
+    return
     await run_yarrp(conf)
     await post_data(conf)
     
