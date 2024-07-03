@@ -1,5 +1,6 @@
 import cProfile
 import logging
+import subprocess
 from multiprocessing import Pool
 import json
 import asyncio
@@ -10,6 +11,8 @@ import platform
 
 from probe.internet_scanner import run_yarrp
 from data_posting.post import post_data
+from target_generation.census_analysis import address_analysis
+from target_generation.generate_target import address_generation
 
 def setup():
     # setup logging
@@ -71,10 +74,14 @@ async def run_at_next_whole_hour(conf):
         await run_yarrp(conf)
         await post_data(conf)
 
+
+
 async def main():
     env_config = setup()
     await run_at_next_whole_hour(env_config)
-
+    #address_analysis()
+    #address_generation()
+    
 
 if __name__ == "__main__":
     asyncio.run(main())

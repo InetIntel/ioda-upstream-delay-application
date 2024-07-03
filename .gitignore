@@ -4,6 +4,7 @@
 .vscode/
 *.pyc
 __pycache__/
+venv/
 
 intermediate_result/
 result/
