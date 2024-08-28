@@ -1,21 +1,16 @@
-import cProfile
 import logging
-import subprocess
 from multiprocessing import Pool
 import json
 import asyncio
 import datetime
-import time
 import os
 import platform
-import uvicorn
 
-
-from probe.internet_scanner import run_yarrp
+from data_posting.initialize import init as db_init
 from data_posting.post import post_data
-#from target_generation.census_analysis import address_analysis
-#from target_generation.generate_target import address_generation
-from webhook.hook import app as test
+
+from prober.internet_scanner import run_yarrp
+
 
 def setup():
     # setup logging
@@ -26,6 +21,16 @@ def setup():
         format='%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+
+    # validate env variables
+    app_vars = ['es_url', 'es_username', 'es_password', 'uuid']
+    app_es_config = {}
+    for var in app_vars:
+        value = os.getenv(var.upper())
+        if not value:
+            logging.error(f"Environment variable {var} is required but not set.")
+            raise EnvironmentError(f"Environment variable {var} is required but not set.")
+        app_es_config[var] = value
 
     # setup env
     directories = [
@@ -42,7 +47,7 @@ def setup():
 
     logging.info("basic setup complete")
 
-    # setup configuration - APP_ENV needs to be set prior the running
+    # setup configuration - APP_ENV needs to be set or we use default as docker
     if os.getenv('APP_ENV') not in ['docker', 'macos', 'ubuntu']:
         if os.path.exists('/.dockerenv'):
             env = 'docker'
@@ -56,47 +61,53 @@ def setup():
     with open('configuration/config.json', 'r') as f:
         configs = json.load(f)
 
-    env_config = configs.get(env, configs['default'])
+
+    # combine config for iupd and config for es
+    combined_config = {**configs.get(env, configs['default']), **app_es_config}
     logging.info(f"conf loaded - {env}")
 
-    return env_config
+    return combined_config
 
     
 
-async def run_at_next_whole_hour(conf):
-    logging.info(f"run_at_next_whole_hour entered")
-    return
-    await run_yarrp(conf)
-    await post_data(conf)
-    
-    while True:
-        curr = datetime.datetime.now()
-        next_whole_hour = curr.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
-        delta = (next_whole_hour - curr).total_seconds()
-        logging.info(f"delta is {delta}")
-        await asyncio.sleep(delta)
+async def run_at_every_whole_hour(conf):
+    logging.info(f"VP initialized started")
+    db_init(conf)
 
+    logging.info(f"VP initialized - fetch targets")
+    #await check_and_update_target_list(conf)
+
+    # if post_data is not successful, then record
+    try:
         await run_yarrp(conf)
         await post_data(conf)
+    except Exception as e:
+        logging.errir(f"error duing first run - {e}")
 
+    while True:
+        try:
+            curr = datetime.datetime.now()
+            time_of_next_whole_hour = curr.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
+            delta = (time_of_next_whole_hour - curr).total_seconds()
+            logging.info(f"time left - {delta} sec")
+            await asyncio.sleep(delta)
 
-async def run_hook_server():
-    # TODO: adjust endpoint
-    config = uvicorn.Config(app=test, host="0.0.0.0", port=8000, log_level="info")
-    server = uvicorn.Server(config)
-    await server.serve()
+            await run_yarrp(conf)
+            await post_data(conf)
+        except Exception as e:
+            logging.errir(f"error duing  - {e}")
+        
+        # await check_and_update_target_list(conf)
+
 
 
 async def main():
-    env_config = setup()
-    uvicorn_task = asyncio.create_task(run_hook_server())
-    probing_task = asyncio.create_task(run_at_next_whole_hour(env_config))
-    await asyncio.gather(uvicorn_task, probing_task)
+    config = setup()
+    probing_task = asyncio.create_task(run_at_every_whole_hour(config))
+    await asyncio.gather(probing_task)
     
-    # On server
-    # address_analysis()
-    # address_generation()
     
 
 if __name__ == "__main__":
     asyncio.run(main())
+ 

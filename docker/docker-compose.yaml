@@ -1,0 +1,22 @@
+services:
+  iupd:
+    build:
+      context: .
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    container_name: iupd-container
+    network_mode: bridge
+    user: root
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - /Users/weili/Project/iupd:/ioda-upstream-delay-new
+    command: python3 main.py
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - APP_ENV=docker
+      - UUID=${UUID}
+      - ES_URL=${ES_URL}
+      - ES_USERNAME=${ES_USERNAME}
+      - ES_PASSWORD=${ES_PASSWORD}

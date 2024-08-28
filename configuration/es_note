@@ -1,0 +1,99 @@
+lifecycle policy API:
+(https://www.elastic.co/guide/en/elasticsearch/reference/current/ilm-put-lifecycle.html#ilm-put-lifecycle-desc)
+PUT _ilm/policy/iupd_policy
+{
+  "policy": {
+    "_meta": {
+      "description": "used for ioda upstream delay data storage",
+      "project": {
+        "name": "IODA Upstream Delay",
+        "department": "GATECH IIL"
+      }
+    },
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_age": "30d",
+            "max_size": "30GB"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+PUT _index_template/iupd_template
+(https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-template.html)
+//Creates or updates an index template. Index templates define settings, mappings, and aliases that can be applied automatically to new indices.
+{
+  "index_patterns": ["iupd-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 5,
+      "number_of_replicas": 1,
+      //"index.lifecycle.name": "iupd_policy"
+    },
+    "mappings": {
+      "properties": {
+        "timestamp": { "type": "date" },
+        "as_number": { "type": "keyword" },
+        "prefixes": {
+          "type": "nested",
+          "properties": {
+            "prefix": { "type": "keyword" },
+            "latency": { "type": "float" },
+            "penultimate_as": { "type": "text" }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+PUT /iupd-0000-000001
+{
+  "aliases": {
+    "iupd_vp_0000": {
+      "is_write_index": true
+    }
+  }
+}
+
+
+docker pull docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+
+docker run --rm --name es01 --net elastic -p 9201:9200 -it -m 1GB docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+
+
+curl -X GET "https://38.110.42.252:9200"
+
+tar -czvf June-26-backup.tar.gz June-26-19* June-26-18* June-26-17* June-26-16*
+
+docker run -e "ENROLLMENT_TOKEN=eyJ2ZXIiOiI4LjE0LjAiLCJhZHIiOlsiMTcyLjE4LjAuMjo5MjAwIl0sImZnciI6IjdlZDYzYWVkMzg5MWUxNjBhYWMwNjYxOWMwMWI3YWY2MDZjMDE5NjQ2OGQ0ZjdkZTBkMTMwYTdkNTE1OWQ5MDciLCJrZXkiOiI2LWZPTXBFQldialB4NWlOVDhPejpsbUhXNU9sS1RtdUZPcnVYQXBzRkxnIn0=" docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+
+
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "timestamp": {
+              "gte": "2024-06-28T00:00:00",
+              "lte": "2024-06-30T23:59:59"
+            }
+          }
+        },
+        {
+          "term": {
+            "as_number": "395831"
+          }
+        }
+      ]
+    }
+  },
+  "_source": ["timestamp", "as_number", "prefixes.prefix", "prefixes.latency", "prefixes.penultimate_as"]
+}

@@ -8,8 +8,8 @@ venv/
 
 intermediate_result/
 result/
-
+server/influxdb/
 yarrp/
-input/
+docker/.env
 
 logging*

@@ -22,11 +22,17 @@
     },
     "yarrp": {
       "target_file": "/ioda-upstream-delay-new/input/test_ip",
+      "hash": "/ioda-upstream-delay-new/input/hash",
       "intermediate_output_file": "/ioda-upstream-delay-new/intermediate_result/test.yrp",
       "result_folder": "/ioda-upstream-delay-new/result",
       "probe_rate": 60000,
       "probe_type": "ICMP",
       "max_ttl": 32
+    },
+    "remote_server": {
+      "server_address": "weili@traversa.cc.gatech.edu",
+      "server_filepath": "/traversa-pool/weili-yarrp-testing/test_ip",
+      "server_hashpath": "/traversa-pool/weili-yarrp-testing/hash"
     }
   },
   "macos": {
