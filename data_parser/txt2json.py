@@ -55,17 +55,30 @@ def group_by_as(input_path, output_path, max_ttl, ipm, dt):
                     rtts = []
 
                 elif line.startswith('END'):
-                    if len(rtts) >=2:
-                        lat = (int(rtts[-1])-int(rtts[-2]))/1000
-                    else:
-                        lat = -1
+                    guaranteed = 0
+                    penultimate_asn = "N/A"
+                    associated_latency = -1
+                    # Origin AS is dest_as 
+                    if dest_as is not "" and dest_as in as_path:
+                        origin_as_index = as_path.index(dest_as)
+                        if origin_as_index > 0:
+                            for i in range(origin_as_index - 1, -1, -1):
+                                if as_path[i] != "N/A" and as_path[i] != "*":
+                                    penultimate_asn = as_path[i]
+                                    if i == origin_as_index -1:
+                                        guaranteed = 1
+
+                                    associated_latency = (int(rtts[origin_as_index])-int(rtts[i]))/1000
+                                    break
+
                     result_dict = {
                         "timestamp": dt,
                         "dest": {"ip": dest_ip, "asn": dest_as},
                         "latency": lat,
                         "penultimate_asn": as_path[-1],
                         "full_traceroute": full_tr_result,
-                        "as_path": as_path
+                        "as_path": as_path,
+                        "guaranteed": guaranteed
                     }
 
                     file_path = f"{output_path}/{dest_as}.json"
