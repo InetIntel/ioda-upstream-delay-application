@@ -1,0 +1,6 @@
+// Create a .env file with the following credentials:
+ES_URL=https://143...245:9201
+ES_USERNAME=...
+ES_PASSWORD=...
+UUID=2024...f313b
+GITHUB_TOKEN=ghp_...Yq2Za
