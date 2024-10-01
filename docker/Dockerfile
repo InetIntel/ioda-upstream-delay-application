@@ -68,9 +68,7 @@ RUN ./bootstrap && ./configure && make
 WORKDIR /
 
 # Clone IODA-UPSTREAM-DELAY repository
-RUN echo "machine github.com login $GITHUB_TOKEN" > /root/.netrc && \
-    git clone https://github.com/Ghoood/iupd /ioda-upstream-delay-new && \
-    rm /root/.netrc
+RUN git clone https://github.com/InetIntel/ioda-upstream-delay-docker-application /ioda-upstream-delay-new
 
 # Create necessary directories
 RUN mkdir -p /ioda-upstream-delay-new/intermediate_result /ioda-upstream-delay-new/result
