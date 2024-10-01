@@ -100,34 +100,39 @@ async def process_directory(folder_name, vpid, es_url, username, password, batch
         duration = end_time - start_time
         logging.info(f"Post stage - {duration:.2f} seconds - {folder_name}")
 
+
+
 async def post_data(conf):
     logging.info("Start data processing")
-    
+
     timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M")
-    
-    src_path = conf["yarrp"]["intermediate_output_file"]
-    dst_folder_path = os.path.join(conf["yarrp"]["result_folder"], timestamp)
+
+    src_path = conf["INTERMEDIATE_OUTPUT_FILE"]
+    dst_folder_path = os.path.join(conf["RESULT_FOLDER"], timestamp)
     dst_path = os.path.join(dst_folder_path, f"{timestamp}.yrp")
-    uuid_str = conf['uuid']
-    es_url = conf['es_url']
-    username = conf['es_username']
-    password = conf['es_password']
+    uuid_str = conf['UUID']
+    
+    remote_servers = conf['REMOTE_STORAGES'].split(',')
+    remote_users = conf['REMOTE_STORAGES_USERS'].split(',')
+    remote_passwords = conf['REMOTE_STORAGES_PASSWORDS'].split(',')
 
     try:
         if not os.path.exists(src_path):
             logging.error(f"post data - src not found - {src_path}")
             raise FileNotFoundError(f"post data - src not found - {src_path}")
-        
+
         if not os.path.exists(dst_folder_path):
             os.makedirs(dst_folder_path)
-            logging.info(f"post data - create dst - {dst_folder_path}")
-        
+            logging.info(f"post data - created destination folder - {dst_folder_path}")
+
         shutil.move(src_path, dst_path)
-
         process_yarrp_result(dst_folder_path, f"{timestamp}.yrp")
-        await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, es_url, username, password)
 
-        logging.info(f"post data finished")
-    
+        for server, user, password in zip(remote_servers, remote_users, remote_passwords):
+            logging.info(f"Processing data for server: {server}")
+            await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, server, user, password)
+
+        logging.info("post data finished")
+
     except Exception as e:
-        logging.error(f"error in posting data: {e}")
+        logging.error(f"Error in posting data: {e}")

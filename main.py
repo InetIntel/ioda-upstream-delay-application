@@ -47,23 +47,6 @@ def setup():
             logging.error(f"Environment variable {var} is required but not set.")
             raise EnvironmentError(f"Environment variable {var} is required but not set.")
         app_es_config[var] = value
-
-    # # setup configuration - APP_ENV needs to be set or we use default as docker
-    # if os.getenv('APP_ENV') not in ['docker', 'macos', 'ubuntu']:
-    #     if os.path.exists('/.dockerenv'):
-    #         env = 'docker'
-    #     elif platform.system() == 'Darwin':
-    #         env = 'macos'
-    #     elif platform.system() == 'Linux':
-    #         env = 'ubuntu'
-    # else:
-    #     env = 'docker'
-    
-    # with open('configuration/config.json', 'r') as f:
-    #     configs = json.load(f)
-
-    # # combine config for iupd and config for es
-    # combined_config = {**configs.get(env, configs['default']), **app_es_config}
     
     logging.info(f"conf loaded")
     return app_es_config
