@@ -2,8 +2,6 @@ services:
   iupd:
     build:
       context: .
-      args:
-        GITHUB_TOKEN: ${GITHUB_TOKEN}
     container_name: iupd-container
     network_mode: bridge
     user: root
@@ -15,8 +13,14 @@ services:
     command: python3 main.py
     environment:
       - DEBIAN_FRONTEND=noninteractive
-      - APP_ENV=docker
+      - APP_ENV=${APP_ENV}
       - UUID=${UUID}
-      - ES_URL=${ES_URL}
-      - ES_USERNAME=${ES_USERNAME}
-      - ES_PASSWORD=${ES_PASSWORD}
+      - REMOTE_STORAGES=${REMOTE_SERVERS}
+      - REMOTE_STORAGES_USERS=${REMOTE_SERVER_USERS}
+      - REMOTE_STORAGES_PASSWORDS=${REMOTE_SERVER_PASSWORDS}
+      - CENTRALIZED_SERVER=${CENTRALIZED_SERVER}
+      - TARGET_FILE=${TARGET_FILE}
+      - INTERMEDIATE_OUTPUT_FILE=${INTERMEDIATE_OUTPUT_FILE}
+      - RESULT_FOLDER=${RESULT_FOLDER}
+      - PROBE_RATE=${PROBE_RATE}
+      - MAX_TTL=${MAX_TTL}
