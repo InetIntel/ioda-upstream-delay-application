@@ -6,10 +6,10 @@ import datetime
 import os
 import platform
 
-from data_posting.initialize import init as db_init
-from data_posting.post import post_data
+from data_uploader.initialize import init as db_init
+from data_uploader.post import post_data
 
-from prober.internet_scanner import run_yarrp
+from internet_prober.internet_scanner import run_yarrp
 
 
 def setup():

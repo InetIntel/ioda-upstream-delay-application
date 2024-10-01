@@ -9,7 +9,7 @@ REMOTE_STORAGES_PASSWORDS="mmd...GLX","mmd...GLX"
 
 CENTRALIZED_SERVER="weili@traversa.cc.gatech.edu"
 
-TARGET_FILE=/ioda-upstream-delay-new/input/test_ip
+TARGET_FILE=/ioda-upstream-delay-new/source_data/test_ip
 INTERMEDIATE_OUTPUT_FILE=/ioda-upstream-delay-new/intermediate_result/test.yrp
 RESULT_FOLDER=/ioda-upstream-delay-new/result
 PROBE_RATE=60000
