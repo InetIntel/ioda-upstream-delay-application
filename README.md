@@ -7,7 +7,6 @@
 - [How to Run the Code](#how-to-run-the-code)
 - [Repository Structure](#repository-structure)
 - [Modules Overview](#modules-overview)
-- [Server Setup](#server-setup)
 - [TODO List](#todo-list)
 
 ## How to Run the Code
