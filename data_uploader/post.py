@@ -6,7 +6,7 @@ import requests
 import json
 from concurrent.futures import ThreadPoolExecutor
 import time
-from parser.txt2json import process_yarrp_result
+from data_parser.txt2json import process_yarrp_result
 
 
 
