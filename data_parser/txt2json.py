@@ -74,7 +74,7 @@ def group_by_as(input_path, output_path, max_ttl, ipm, dt):
                     result_dict = {
                         "timestamp": dt,
                         "dest": {"ip": dest_ip, "asn": dest_as},
-                        "latency": lat,
+                        "latency": associated_latency,
                         "penultimate_asn": as_path[-1],
                         "full_traceroute": full_tr_result,
                         "as_path": as_path,
