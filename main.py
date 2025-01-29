@@ -1,87 +1,86 @@
 import logging
-from multiprocessing import Pool
 import json
 import asyncio
 import datetime
 import os
+import pathlib
 import platform
+import yaml
 
-from data_uploader.initialize import init as db_init
+from multiprocessing import Pool
+
+#from data_uploader.initialize import init as db_init
 from data_uploader.post import post_data
-
-from internet_prober.internet_scanner import run_yarrp
+import prober 
 
 
 def setup():
+    # set default config values, then load user-provided config file (if it exists)
+    config_path = os.getenv("CONFIG_FILE")
+    if not config_path:
+        config_path = "/config/config.yaml"
+
+    config = {"vp" : {},
+              "prober" : {"tmp_dir" : "/data/tmp",
+                          "tmp_output_file" : "/data/tmp/output.yrp",
+                          "probe_rate" : 60000,
+                          "interval" : 1800, # in seconds
+                          "max_ttl" : 32,
+                          "probe_type" : "ICMP",
+                          "targets_file" : "/ioda-upstream-delay-application/source_data/test_ip",
+                         },
+              "reporting" : {},
+              "logging" : {'path' : '/data/logging.log'}
+             }
+    try:
+        with open(config_path, "r") as f:
+            user_config = yaml.safe_load(f)
+            config.update(user_config)
+    except FileNotFoundError:
+        # No config file exists, use default settings above
+        pass
+
     # setup logging
     logging.basicConfig(
-        filename='logging.log',
+        filename=config['logging']['path'],
         filemode='a',
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-
-    # setup dirs
-    directories = [
-        'result',
-        'intermediate_result'
-    ]
     
-    for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory, True)
-            logging.info(f"create directory - {directory}")
-        else:
-            logging.info(f"directory existed - {directory}")
+    dirs_to_make = [os.path.dirname(config['prober']['tmp_output_file']),
+                    os.path.dirname(config['logging']['path'])]
+    for directory in dirs_to_make:
+        pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
-    logging.info("basic setup complete")
+    if "id" not in config['vp']:
+        config['vp']['id'] = "asdf1234"
 
-    # validate env variables
-    required_app_vars = ['REMOTE_STORAGES', 'REMOTE_STORAGES_USERS', 'REMOTE_STORAGES_PASSWORDS', 
-                         'UUID', 'TARGET_FILE', 'INTERMEDIATE_OUTPUT_FILE', 'RESULT_FOLDER', 
-                         'PROBE_RATE', 'MAX_TTL']
-    
-    # List of optional environmental variables and their default values
-    optional_app_vars = {'INTERVAL' : 1800 # Interval (in seconds) between running measurements
-                         }
-    app_es_config = {}
-
-    for var in required_app_vars:
-        value = os.getenv(var)
-        if not value:
-            logging.error(f"Environment variable {var} is required but not set.")
-            raise EnvironmentError(f"Environment variable {var} is required but not set.")
-        app_es_config[var] = value
-
-    for var in optional_app_vars:
-        value = os.getenv(var)
-        if not value:
-            value = optional_app_vars[var]
-        app_es_config[var] = value
-    
     logging.info(f"conf loaded")
-    return app_es_config
+    return config
 
 
 def ceil_datetime(dt, dt_delta):
     return dt + (datetime.datetime.min - dt) % dt_delta
 
-async def prober_loop(conf):
-    logging.info(f"VP initialized started")
-    db_init(conf)
+async def prober_loop(config):
+    logging.info("IODA Upstream Delay Vantage Point starting...")
+    logging.info("VP initialization...")
+    #db_init(config)
 
-    logging.info(f"VP initialized - fetch targets")
+    logging.info("VP initialized - fetch targets")
     #await check_and_update_target_list(conf)
 
-    probe_interval = datetime.timedelta(seconds=conf['INTERVAL'])
-    # if post_data is not successful, then record
+    probe_interval = datetime.timedelta(seconds=config['prober']['interval'])
     while True:
         try:
-            await run_yarrp(conf)
-            await post_data(conf)
+            logging.info("Running prober")
+            #await prober.run(config)
+            logging.info("Posting data")
+            await post_data(config)
             curr = datetime.datetime.now()
-            next_run = ceil_datetime(curr,probe_interval)
+            next_run = ceil_datetime(curr, probe_interval)
             sleep_time = (next_run - curr).total_seconds()
             logging.info(f"Sleeping for {sleep_time} sec")
             await asyncio.sleep(sleep_time)
