@@ -11,6 +11,8 @@ from data_parser.txt2json import process_yarrp_result
 
 
 def parse_line(line):
+    print(line)
+    logging.info(line)
     data = json.loads(line)
     # Need prefix
     prefix = data['dest']['ip']
@@ -57,13 +59,22 @@ def create_bulk_data(documents, vpid):
         bulk_data.append(json.dumps(doc))
     return "\n".join(bulk_data) + "\n"
 
-def post_bulk_data(bulk_data, es_url, username, password):
+def post_bulk_data(bulk_data, reporting_server):
+    es_url = reporting_server['url']
+    authentication = reporting_server['authentication']
+    if authentication['method'] == 'user':
+        auth = (authentication['user'],authentication['password'])
+        headers = {"Content-Type": "application/x-ndjson"}
+    elif authentication['method'] == 'ApiKey':
+        auth = None
+        headers = {"Content-Type": "application/x-ndjson",
+                   "authorization" : "ApiKey "+authentication['token']}
     try:
         response = requests.post(
             es_url+"/_bulk",
-            headers={"Content-Type": "application/x-ndjson"},
+            headers=headers,
             data=bulk_data,
-            auth=(username, password),
+            auth=auth,
             verify=False
         )
         if response.status_code not in [200, 201]:
@@ -72,7 +83,7 @@ def post_bulk_data(bulk_data, es_url, username, password):
         logging.error(f"Request exception: {e}")
 
 # Multi processing + bulk API (for ES to efficiently index documents)
-async def process_directory(folder_name, vpid, es_url, username, password, batch_size=100, num_threads=5):
+async def process_directory(folder_name, vpid, reporting_server, batch_size=100, num_threads=5):
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = []
         logging.info(f"Processing directory - {folder_name}")
@@ -86,7 +97,7 @@ async def process_directory(folder_name, vpid, es_url, username, password, batch
                     documents.append(document)
                     if len(documents) >= batch_size:
                         bulk_data = create_bulk_data(documents, vpid)
-                        futures.append(executor.submit(post_bulk_data, bulk_data, es_url, username, password))
+                        futures.append(executor.submit(post_bulk_data, bulk_data, reporting_server))
                         documents = [] 
         
         if documents:  
@@ -102,20 +113,16 @@ async def process_directory(folder_name, vpid, es_url, username, password, batch
 
 
 
-async def post_data(conf):
+async def post_data(config):
     logging.info("Start data processing")
 
     timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M")
 
-    src_path = conf["INTERMEDIATE_OUTPUT_FILE"]
-    dst_folder_path = os.path.join(conf["RESULT_FOLDER"], timestamp)
+    src_path = config["prober"]["tmp_output_file"]
+    dst_folder_path = os.path.join(config["prober"]['tmp_dir'], timestamp)
     dst_path = os.path.join(dst_folder_path, f"{timestamp}.yrp")
-    uuid_str = conf['UUID']
+    uuid_str = config['vp']['id']
     
-    remote_servers = conf['REMOTE_STORAGES'].split(',')
-    remote_users = conf['REMOTE_STORAGES_USERS'].split(',')
-    remote_passwords = conf['REMOTE_STORAGES_PASSWORDS'].split(',')
-
     try:
         if not os.path.exists(src_path):
             logging.error(f"post data - src not found - {src_path}")
@@ -128,9 +135,9 @@ async def post_data(conf):
         shutil.move(src_path, dst_path)
         process_yarrp_result(dst_folder_path, f"{timestamp}.yrp")
 
-        for server, user, password in zip(remote_servers, remote_users, remote_passwords):
-            logging.info(f"Processing data for server: {server}")
-            await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, server, user, password)
+        for reporting_server in config['reporting']:
+            logging.info(f"Processing data for server: "+reporting_server['url'])
+            await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, reporting_server)
 
         logging.info("post data finished")
 

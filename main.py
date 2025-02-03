@@ -76,7 +76,7 @@ async def prober_loop(config):
     while True:
         try:
             logging.info("Running prober")
-            #await prober.run(config)
+            await prober.run(config)
             logging.info("Posting data")
             await post_data(config)
             curr = datetime.datetime.now()

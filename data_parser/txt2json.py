@@ -59,7 +59,7 @@ def group_by_as(input_path, output_path, max_ttl, ipm, dt):
                     penultimate_asn = "N/A"
                     associated_latency = -1
                     # Origin AS is dest_as 
-                    if dest_as is not "" and dest_as in as_path:
+                    if dest_as != "" and dest_as in as_path:
                         origin_as_index = as_path.index(dest_as)
                         if origin_as_index > 0:
                             for i in range(origin_as_index - 1, -1, -1):
@@ -119,18 +119,18 @@ def group_by_as(input_path, output_path, max_ttl, ipm, dt):
 def process_yarrp_result(folder_path, filename):
     curr = datetime.now()
     dt = curr.strftime("%Y-%m-%dT%H:%M:%S")
-    ipm = pyipmeta.IpMeta(providers=["pfx2as "
-                                    "-f input/dataset/routeviews-rv2-20240422-1200.pfx2as.gz"])
+    #ipm = pyipmeta.IpMeta(providers=["pfx2as "
+    #                                "-f input/dataset/routeviews-rv2-20240422-1200.pfx2as.gz"])
 
     
     src_path = os.path.join(folder_path, filename)
     parsed_file_path = os.path.join(folder_path, "parsed.txt")
     dst_path = os.path.join(folder_path, "result")
     try:
-        process = subprocess.run(["parser/yrp2text", "-i", src_path, "-o", parsed_file_path])
+        process = subprocess.run(["data_parser/yrp2text", "-i", src_path, "-o", parsed_file_path])
     except subprocess.CalledProcessError as e:
         logging.error(f"yrp2text error - {e.stderr}")
     os.makedirs(dst_path, exist_ok=True)
 
-    group_by_as(parsed_file_path, dst_path, 32, ipm, dt)
+    #group_by_as(parsed_file_path, dst_path, 32, ipm, dt)
         
