@@ -6,26 +6,12 @@ import requests
 import json
 from concurrent.futures import ThreadPoolExecutor
 import time
-from data_parser.txt2json import process_yarrp_result
+
+import parser
 
 
 
-def parse_line(line):
-    print(line)
-    logging.info(line)
-    data = json.loads(line)
-    # Need prefix
-    prefix = data['dest']['ip']
-    latency = data['latency']
-    penultimate_as = data['penultimate_asn']
-    full_traceroute = data['full_traceroute']
-    
-    return {
-        "prefix": prefix,
-        "latency": latency,
-        "penultimate_as": penultimate_as,
-        'full_traceroute': full_traceroute
-    }
+
 
 # Every file is responsible for an AS, and thus a document in ES
 def process_file(file_path, folder_name):
@@ -33,24 +19,18 @@ def process_file(file_path, folder_name):
     as_number = file_name.split('.')[0]
 
     try:
-        timestamp = datetime.strptime(folder_name, '%Y-%m-%dT%H:%M').isoformat()
+        timestamp = datetime.strptime(folder_name, '%Y-%m-%dT%H-%M').isoformat()
     except ValueError as e:
         logging.info(f"Failed parsing timestamp - {folder_name}")
         return None
     
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
         if not lines:
             logging.info(f"No data in file - {folder_name} - {file_path}")
             return None
         
-        prefixes = [parse_line(line) for line in lines if line.strip()]
-        
-        return {
-            "timestamp": timestamp,
-            "as_number": as_number,
-            "prefixes": prefixes
-        }
+        return [json.loads(line.strip()) for line in lines]
 
 def create_bulk_data(documents, vpid):
     bulk_data = []
@@ -69,6 +49,7 @@ def post_bulk_data(bulk_data, reporting_server):
         auth = None
         headers = {"Content-Type": "application/x-ndjson",
                    "authorization" : "ApiKey "+authentication['token']}
+
     try:
         response = requests.post(
             es_url+"/_bulk",
@@ -92,17 +73,17 @@ async def process_directory(folder_name, vpid, reporting_server, batch_size=100,
         for file in os.listdir(folder_name):
             if file.endswith('.json'):
                 file_path = os.path.join(folder_name, file)
-                document = process_file(file_path, folder_name.split("/")[-2])
-                if document:
-                    documents.append(document)
+                docs = process_file(file_path, folder_name.split("/")[-2])
+                if len(docs) > 0:
+                    documents += docs
                     if len(documents) >= batch_size:
                         bulk_data = create_bulk_data(documents, vpid)
                         futures.append(executor.submit(post_bulk_data, bulk_data, reporting_server))
                         documents = [] 
         
-        if documents:  
+        if len(documents) > 0:  
             bulk_data = create_bulk_data(documents, vpid)
-            futures.append(executor.submit(post_bulk_data, bulk_data, es_url, username, password))
+            futures.append(executor.submit(post_bulk_data, bulk_data, reporting_server))
     
         for future in futures:
             future.result()
@@ -133,11 +114,11 @@ async def post_data(config):
             logging.info(f"post data - created destination folder - {dst_folder_path}")
 
         shutil.move(src_path, dst_path)
-        process_yarrp_result(dst_folder_path, f"{timestamp}.yrp")
+        parser.process_yarrp_result(dst_folder_path, f"{timestamp}.yrp")
 
         for reporting_server in config['reporting']:
-            logging.info(f"Processing data for server: "+reporting_server['url'])
-            await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, reporting_server)
+            logging.info(f"Processing data for server: "+reporting_server)
+            await process_directory(os.path.join(dst_folder_path, "result"), uuid_str, config['reporting'][reporting_server])
 
         logging.info("post data finished")
 
