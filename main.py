@@ -93,7 +93,7 @@ def setup():
     #a = b
     logging.info(str(config))
     logging.info(str(os.environ.items()))
-    dirs_to_make = [os.path.dirname(config['prober']['tmp_output_file']),
+    dirs_to_make = [os.path.dirname(config['prober']['tmp_dir']),
                     os.path.dirname(config['logging']['path'])]
     for directory in dirs_to_make:
         pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
