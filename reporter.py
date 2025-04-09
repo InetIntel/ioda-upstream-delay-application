@@ -17,6 +17,7 @@ async def report_data(conf):
             'rsync',
             '-avHP',
             '--remove-source-files',
+            '--bwlimit=' + conf['reporting']['bw_limit'],
             '-e',
             'ssh  -i ' +conf['ssh_identity_file']+' -p 3412 -o "StrictHostKeyChecking no"'
             ] + pending_files + [

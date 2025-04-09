@@ -25,7 +25,6 @@ def create_config():
 
     config = {"vp" : {"hostname" : socket.gethostname()},
               "prober" : {"tmp_dir" : "/data/tmp",
-                          "tmp_output_file" : "/data/tmp/output.yrp",
                           "probe_rate" : 60000,
                           "interval" : 1800, # in seconds
                           "max_ttl" : 32,
@@ -33,7 +32,7 @@ def create_config():
                           "targets_file" : "/ioda-upstream-delay-application/source_data/targets",
                          },
               "ssh_identity_file" : "/data/ssh_id",
-              "reporting" : {},
+              "reporting" : {"bw_limit" : "100m"},
               "logging" : {'path' : '/data/logging.log'}
              }
     try:
@@ -47,6 +46,8 @@ def create_config():
     for key,value in os.environ.items():
         if key == "PROBE_RATE":
             config['prober']['probe_rate'] = os.environ.get(key)
+        elif key == "BW_LIMIT":
+            config["reporting"]["bw_limit"] = os.environ.get(key)
         elif key.startswith("REPORT_SERVER_") and key.endswith("_URL"):
             key_prefix = key[:key.rfind("_URL")]
             url = value
