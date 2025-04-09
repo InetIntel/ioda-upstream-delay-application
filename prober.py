@@ -1,11 +1,15 @@
 import json
 import asyncio
 import logging
+import datetime
+import os
 
 async def run(conf):
     yarrp_command = [
         '/yarrp/yarrp',
-        '-o', conf['prober']['tmp_output_file'],
+        '-o', os.path.join(conf['prober']['tmp_dir'],
+                           "{hostname}_{timestamp}.yrp".format(hostname=conf['vp']['hostname'], 
+                                                               timestamp=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))),
         '-i', conf['prober']['targets_file'],
         '-r', str(conf['prober']['probe_rate']),
         '-t', conf['prober']['probe_type'],

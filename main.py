@@ -7,6 +7,7 @@ import pathlib
 import platform
 import yaml
 import utils
+import socket
 
 from multiprocessing import Pool
 from logging.handlers import RotatingFileHandler
@@ -14,6 +15,7 @@ from logging.handlers import RotatingFileHandler
 #from data_uploader.initialize import init as db_init
 from data_uploader.post import post_data
 import prober 
+import reporter
 
 def create_config():
     # set default config values, then load user-provided config file (if it exists)
@@ -21,15 +23,16 @@ def create_config():
     if not config_path:
         config_path = "/config/config.yaml"
 
-    config = {"vp" : {},
+    config = {"vp" : {"hostname" : socket.gethostname()},
               "prober" : {"tmp_dir" : "/data/tmp",
                           "tmp_output_file" : "/data/tmp/output.yrp",
-                          "probe_rate" : 30000,
+                          "probe_rate" : 60000,
                           "interval" : 1800, # in seconds
                           "max_ttl" : 32,
                           "probe_type" : "ICMP",
                           "targets_file" : "/ioda-upstream-delay-application/source_data/targets",
                          },
+              "ssh_identity_file" : "/data/ssh_id",
               "reporting" : {},
               "logging" : {'path' : '/data/logging.log'}
              }
@@ -42,7 +45,9 @@ def create_config():
         pass
 
     for key,value in os.environ.items():
-        if key.startswith("REPORT_SERVER_") and key.endswith("_URL"):
+        if key == "PROBE_RATE":
+            config['prober']['probe_rate'] = os.environ.get(key)
+        elif key.startswith("REPORT_SERVER_") and key.endswith("_URL"):
             key_prefix = key[:key.rfind("_URL")]
             url = value
             auth_method = os.environ.get(key_prefix+"_AUTH_METHOD")
@@ -72,14 +77,17 @@ def create_config():
 
 def setup():
     # setup logging
+    handler = RotatingFileHandler('app.log', maxBytes=1024, backupCount=3)
     logging.basicConfig(
         #filename=config['logging']['path'],
-        filename='/data/logging.log',
-        filemode='a',
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers = [RotatingFileHandler(filename='/data/ioda-ud.log',
+                                        mode='a',
+                                        maxBytes=30*1024*1024,
+                                        backupCount=3)]
+        )
     config = create_config()
     #a = b
     logging.info(str(config))
@@ -110,14 +118,21 @@ async def prober_loop(config):
     probe_interval = datetime.timedelta(seconds=config['prober']['interval'])
     while True:
         try:
+            logging.info("Reporting measurement results")
+            await reporter.report_data(config)
             logging.info("Running prober")
             stats_before = utils.get_network_stats()
             await prober.run(config)
             stats_after = utils.get_network_stats()
             logging.info("Net usage: %s", json.dumps(utils.compare_stats(stats_before, stats_after), indent=4))
             
-            logging.info("Posting data")
+            
+            logging.info("Reporting measurement results")
+            await reporter.report_data(config)
+
+            """
             await post_data(config)
+            """
             curr = datetime.datetime.now()
             next_run = ceil_datetime(curr, probe_interval)
             sleep_time = (next_run - curr).total_seconds()
