@@ -53,7 +53,7 @@ def process_yarrp_result(folder_path, filename):
     parsed_file_path = os.path.join(folder_path, "parsed.txt")
     dst_path = os.path.join(folder_path, "result")
     try:
-        process = subprocess.run(["data_parser/yrp2text", "-i", src_path, "-o", parsed_file_path])
+        process = subprocess.run(["yrp2text/yrp2text", "-i", src_path, "-o", parsed_file_path])
     except subprocess.CalledProcessError as e:
         logging.error(f"yrp2text error - {e.stderr}")
     os.makedirs(dst_path, exist_ok=True)

@@ -52,14 +52,16 @@ def post_bulk_data(bulk_data, reporting_server):
 
     try:
         response = requests.post(
-            es_url+"/_bulk",
+            es_url+"/_bulk?filter_path=took,errors",
             headers=headers,
             data=bulk_data,
             auth=auth,
             verify=False
         )
         if response.status_code not in [200, 201]:
-            logging.error(f"Failed to insert documents: {response.text}")
+            logging.error(f"Failed to insert documents: \t{response.headers}\n\t{response.text}")
+        else:
+            logging.info(f"Successful report: \t{response.headers}\n\t{response.text}")
     except requests.RequestException as e:
         logging.error(f"Request exception: {e}")
 
