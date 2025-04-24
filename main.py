@@ -49,7 +49,7 @@ def create_config():
         elif key == "BW_LIMIT":
             config["reporting"]["bw_limit"] = os.environ.get(key)
         elif key == "INTERVAL":
-            config['prober']['interval'] = os.environ.get(key)
+            config['prober']['interval'] = int(os.environ.get(key))
         elif key.startswith("REPORT_SERVER_") and key.endswith("_URL"):
             key_prefix = key[:key.rfind("_URL")]
             url = value
