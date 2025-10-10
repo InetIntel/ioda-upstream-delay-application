@@ -30,6 +30,7 @@ using namespace ip;
 
 string infile_name = "";
 string outfile_name = "";
+string delimiter = ",";
 bool read_stdin = false;
 
 void usage(char *prog) {
@@ -38,6 +39,7 @@ void usage(char *prog) {
 		 << " $ bzip2 -dc input.yrp.bz2 | " << prog << " -s -o output.txt" << endl
 		 << "  -i, --input             Input Yarrp file" << endl
 		 << "  -o, --output            Output text file" << endl
+		 << "  -d, --delimiter         Field delimiter (default: comma)" << endl
 		 << "  -s, --stdin             Read piped input from STIDN" << endl
 		 << "  -h, --help              Show this message" << endl
 		 << endl;
@@ -58,6 +60,9 @@ void parse_opts(int argc, char **argv) {
 			break;
 		  case 'o':
 			outfile_name = argv[++opt_index];
+			break;
+		  case 'd':
+			delimiter = argv[++opt_index];
 			break;
 		  case 's':
 			read_stdin = true;
@@ -89,6 +94,7 @@ struct hop {
 	uint8_t ttl;
 	uint8_t rttl;
 	uint8_t rtos;
+	string mpls;
 	uint8_t icmp_type;
 	uint8_t icmp_code;
 	// for reconstructing the original order
@@ -105,6 +111,7 @@ struct hop {
 		ttl = r.ttl;
 		rttl = r.rttl;
 		rtos = r.rtos;
+		mpls = r.mpls;
 		icmp_type = r.typ;
 		icmp_code = r.code;
 		return *this;
@@ -170,7 +177,7 @@ yrpStats yarrp_proc(string yarrpfile, unordered_map<ipaddress, vector<hop> > &tr
  * we can then sort hops based on this number for each target to recover the orginal order during probing
 */
 
-void write_traces_to_text(unordered_map<ipaddress, vector<hop> > &traces, string outfile_name) {
+void write_traces_to_text(unordered_map<ipaddress, vector<hop> > &traces, string outfile_name, string delim) {
 	ofstream outfile(outfile_name);
 	if (!outfile.is_open()) {
 		cerr << "Failed to open output file: " << outfile_name << endl;
@@ -180,22 +187,24 @@ void write_traces_to_text(unordered_map<ipaddress, vector<hop> > &traces, string
 	for (auto &trace : traces) {
 		ipaddress target = trace.first;
 		vector<hop> &hops = trace.second;
-		
 		outfile << "Trace to:" << target << endl;
 		sort(hops.begin(), hops.end());
 		for (auto &this_hop : hops) {
-			outfile << this_hop.addr << ","
-                    << this_hop.sec << ","
-                    << this_hop.usec << ","
-                    << this_hop.rtt << ","
-                    << this_hop.ipid << ","
-                    << this_hop.psize << ","
-                    << this_hop.rsize << ","
-                    << uint16_t(this_hop.ttl) << ","
-                    << uint16_t(this_hop.rttl) << ","
-                    << uint16_t(this_hop.rtos) << ","
-                    << uint16_t(this_hop.icmp_type) << ","
-                    << uint16_t(this_hop.icmp_code) << ","
+			outfile << this_hop.addr << delim
+                    << this_hop.sec << delim
+                    << this_hop.usec << delim
+                    << this_hop.rtt << delim
+                    << this_hop.ipid << delim
+                    << this_hop.psize << delim
+                    << this_hop.rsize << delim
+                    << uint16_t(this_hop.ttl) << delim
+                    << uint16_t(this_hop.rttl) << delim
+                    << uint16_t(this_hop.rtos) << delim
+                    // Quote MPLS field when using comma delimiter to handle comma-separated label stacks (e.g., "16:255,17:254")
+                    // Without quotes, multiple labels would be parsed as separate CSV fields
+                    << (delim == "," ? "\"" : "") << this_hop.mpls << (delim == "," ? "\"" : "") << delim
+                    << uint16_t(this_hop.icmp_type) << delim
+                    << uint16_t(this_hop.icmp_code) << delim
 					<< this_hop.yrp_counter << endl;
 		}
 		outfile << "END" << endl;
@@ -212,7 +221,7 @@ int main(int argc, char* argv[])
 	yrpStats stats = yarrp_proc(infile_name, traces);
 	cout << "Created " << traces.size() << " traces" << endl;
 
-	write_traces_to_text(traces, outfile_name);
+	write_traces_to_text(traces, outfile_name, delimiter);
 
 	return 0;
 }
