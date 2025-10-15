@@ -50,18 +50,21 @@ struct yarrpRecord
 	uint16_t rsize;
 	uint8_t rttl;
 	uint8_t rtos;
+	string mpls;
 	uint64_t count;
 };
 
 ostream& operator<< (ostream& os, const yarrpRecord& r)
 {
-    return os << r.target << ", " << r.sec << ", " << r.usec << ", " << uint16_t(r.typ) << ", " << uint16_t(r.code) << ", " << uint16_t(r.ttl) << ", " << r.hop << ", " << r.rtt << ", " << r.ipid << ", " << r.psize << ", " << r.rsize << ", " << uint16_t(r.rttl) << ", " << uint16_t(r.rtos) << ", " << r.count;
+    // Quote MPLS field to handle comma-separated label stacks
+    return os << r.target << ", " << r.sec << ", " << r.usec << ", " << uint16_t(r.typ) << ", " << uint16_t(r.code) << ", " << uint16_t(r.ttl) << ", " << r.hop << ", " << r.rtt << ", " << r.ipid << ", " << r.psize << ", " << r.rsize << ", " << uint16_t(r.rttl) << ", " << uint16_t(r.rtos) << ", \"" << r.mpls << "\", " << r.count;
 }
+
 istream& operator>> (istream &in, yarrpRecord& r)
 {
 	uint16_t typ, code, ttl, rttl, rtos;
-	in >> r.target >> r.sec >> r.usec >> typ >> code >> ttl >> r.hop >> r.rtt >> r.ipid >> r.psize >> r.rsize >> rttl >> rtos >> r.count;
-	
+	in >> r.target >> r.sec >> r.usec >> typ >> code >> ttl >> r.hop >> r.rtt >> r.ipid >> r.psize >> r.rsize >> rttl >> rtos >> r.mpls >> r.count;
+
 	r.typ = typ;
 	r.code = code;
 	r.ttl = ttl;
