@@ -7,7 +7,7 @@ import time
 from collections import OrderedDict
 
 from . import config as config_mod
-from . import manifest, naming, proc, rates
+from . import clock, manifest, naming, proc, rates
 
 # yarrp sleeps a fixed 60s after its last probe, letting the listener collect
 # straggling replies (SHUTDOWN_WAIT in yarrp.h)
@@ -136,7 +136,7 @@ def run_one_scan(profile, bucket, ip_list, probe_rate, instance, cfg, cycle_star
         log_label, len(ip_list), probe_rate, max_ttl, " ".join(yarrp_cmd),
     )
 
-    scan_start = datetime.datetime.now()
+    scan_start = clock.now()
     started = time.time()
     try:
         with open(scan_log_path, "w") as scan_log:
@@ -340,7 +340,8 @@ def run_profile(profile, buckets, cfg, cycle_start, deadline):
             estimate_seconds(len(ips), max_ttl, retry_rates[bucket])
             for bucket, ips in pending.items()
         )
-        finishes_at = datetime.datetime.now() + datetime.timedelta(seconds=needed + margin)
+        # deadline is UTC-aware, so this must be too.
+        finishes_at = clock.now() + datetime.timedelta(seconds=needed + margin)
         if finishes_at > deadline:
             logging.error(
                 "[%s] Not retrying %s - an attempt needs about %.0fs and would run "

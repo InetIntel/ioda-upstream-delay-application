@@ -13,15 +13,21 @@ set one up.
 
 ## How it works
 
-Every `interval` seconds, aligned to the machine's clock (so a 1800s interval
-starts a cycle on every half hour, and every vantage point in the fleet
-measures over the same windows):
+Every `interval` seconds, on boundaries measured from midnight **UTC** (so a
+1800s interval starts a cycle on every half hour, and every vantage point in
+the fleet measures over the same windows regardless of its local timezone):
 
 1. Upload anything waiting in the outbox.
 2. For each profile, in order: read its target list, bucket the targets by
    probe type, and run yarrp once per bucket.
 3. Upload again.
 4. Sleep until the next boundary.
+
+On startup the first cycle **waits for the next boundary** rather than running
+immediately. Starting at once would stamp that cycle with an off-boundary time
+and leave it only the remainder of the current interval to finish in, which it
+would then overrun - costing the following cycle as well. Waiting costs at most
+one interval, once.
 
 A cycle that overruns its interval lands on the following boundary rather than
 drifting.
@@ -148,7 +154,11 @@ traversa_20260907_163000_default-icmp.yrp
 traversa_20260907_163000_multiproto-tcp-ack-p443.yrp
 ```
 
-The timestamp is the cycle's start, so every file from one cycle shares it.
+The timestamp is the cycle's start in UTC, rounded down to the interval
+boundary, so every file from one cycle shares it and it is always an exact
+boundary. Both matter downstream: the collection server groups uploads into
+30-minute windows by parsing this field, and two vantage points in different
+timezones must not disagree about when a cycle began.
 
 The server splits this name on underscores and truncates it at the first dot,
 so it must be exactly four underscore-separated tokens and the trailing label
