@@ -75,16 +75,10 @@ def run_cycle(cfg, cycle_start, deadline):
 
 
 def wait_for_first_boundary(interval):
-    """Sleeps until the next interval boundary. True if we're shutting down.
-
-    Without this the first cycle after a restart starts at an arbitrary time:
-    it gets stamped with an off-boundary timestamp, and it is handed only the
-    remainder of the current interval to finish in, which it then overruns -
-    pushing the following cycle out too. So a restart at 16:17 produced one
-    oddly-named scan and no scan at all for 16:30.
-
-    Waiting costs at most one interval, once, and every cycle thereafter
-    starts on a boundary the whole fleet agrees on.
+    """
+    VPs now wait until the next interval to launch a yarrp scan so that scans are
+    guaranteed to happen on the boundaries. Makes bucketing and other server side logic
+    much simpler at the cost of the occasional yarrp scan.
     """
     first = clock.ceil(clock.now(), interval)
     seconds = (first - clock.now()).total_seconds()

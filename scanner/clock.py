@@ -1,15 +1,9 @@
-"""Cycle boundaries, and the clock they are measured against.
-
-Everything here is UTC, deliberately. A cycle's start time goes into every
-filename the vantage point uploads, and the collection server groups those
-uploads into 30-minute windows by parsing it - so two vantage points in
-different timezones must not disagree about when a cycle began. The machine's
-local time never enters into it.
-
-Boundaries are measured from midnight, so the whole fleet agrees on them
-without coordinating. An interval that doesn't divide the day evenly leaves a
-short final interval before midnight; that is the cost of having boundaries be
-a function of the clock rather than of when each process happened to start.
+"""
+To more effectively bucket yarrp scans across VPs, we use the exact virtual
+starting time of the scan (the exact half an hour mark) rather than the physical
+time started (usually a few ms after the half an hour) so that we can easily associate
+yarrp scans by the 30-minute bucket they fall into (keeps things simple server side).
+Logic extends to intervals other than 30-minute if necessary.
 """
 
 import datetime
